@@ -1,0 +1,388 @@
+/* 전체 앱 스타일 */
+.app {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 헤더 스타일 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #2563eb;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-tab {
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255,255,255,0.3);
+  background-color: transparent;
+  color: rgba(255,255,255,0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.nav-tab:hover {
+  border-color: white;
+  color: white;
+  background-color: rgba(255,255,255,0.1);
+}
+
+.nav-tab.active {
+  background-color: white;
+  color: #2563eb;
+  border-color: white;
+}
+
+/* 주문 화면 스타일 */
+.order-screen {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+}
+
+/* 메뉴 섹션 */
+.menu-section {
+  margin-bottom: 2rem;
+  flex: 1;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+  min-height: 400px;
+}
+
+.menu-item {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.menu-item:hover {
+  transform: translateY(-2px);
+}
+
+.item-image {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.coffee-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+/* 아이스 아메리카노 이미지 특별 스타일 */
+.item-image:has(.coffee-image[src*="iced-coffee"]) .coffee-image {
+  object-fit: cover;
+  object-position: center;
+}
+
+
+.item-info {
+  padding: 1.5rem;
+}
+
+.item-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f59e0b;
+  margin: 0 0 0.5rem 0;
+}
+
+.item-description {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+
+.options {
+  margin: 1rem 0;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+}
+
+.option input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #2563eb;
+}
+
+.add-to-cart-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* 장바구니 섹션 */
+.cart-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  position: sticky;
+  bottom: 2rem;
+  flex-shrink: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.cart-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.cart-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.quantity-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.quantity {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 20px;
+  text-align: center;
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.remove-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.remove-btn:hover {
+  background-color: #dc2626;
+}
+
+.cart-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cart-total {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1f2937;
+  padding: 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.order-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.order-btn:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.order-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* 관리자 화면 */
+.admin-screen {
+  padding: 2rem;
+  text-align: center;
+}
+
+.admin-screen h2 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.admin-screen p {
+  color: #6b7280;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .order-screen {
+    padding: 1rem;
+  }
+  
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .cart-section {
+    position: relative;
+    bottom: auto;
+    margin-top: 2rem;
+  }
+  
+  .cart-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .item-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (min-width: 1024px) {
+  .menu-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
