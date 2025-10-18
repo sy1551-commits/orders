@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import './App.css'
 
 function App() {
@@ -60,7 +60,7 @@ function App() {
   ]
 
   // 장바구니에 상품 추가
-  const addToCart = (item, options) => {
+  const addToCart = useCallback((item, options) => {
     const existingItemIndex = cart.findIndex(cartItem => 
       cartItem.productId === item.id && 
       JSON.stringify(cartItem.options) === JSON.stringify(options)
@@ -86,7 +86,7 @@ function App() {
       }
       setCart([...cart, cartItem])
     }
-  }
+  }, [cart])
 
   // 장바구니에서 상품 제거
   const removeFromCart = (itemId) => {
@@ -160,6 +160,56 @@ function App() {
     const completed = orders.filter(order => order.status === '제조 완료').length
     
     return { totalOrders, receivedOrders, inProduction, completed }
+  }
+
+  // 주문 처리 함수
+  const handleOrder = () => {
+    if (cart.length === 0) return
+
+    // 재고 확인 및 차감
+    const updatedInventory = [...inventory]
+    let canOrder = true
+    let outOfStockItems = []
+
+    for (const cartItem of cart) {
+      const inventoryItem = updatedInventory.find(inv => inv.id === cartItem.productId)
+      if (inventoryItem) {
+        if (inventoryItem.stock < cartItem.quantity) {
+          canOrder = false
+          outOfStockItems.push(cartItem.name)
+        } else {
+          inventoryItem.stock -= cartItem.quantity
+        }
+      }
+    }
+
+    if (!canOrder) {
+      alert(`재고가 부족합니다: ${outOfStockItems.join(', ')}`)
+      return
+    }
+
+    const newOrder = {
+      id: Date.now(),
+      orderTime: new Date().toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).replace(/\./g, '-').replace(/,/g, ''),
+      items: cart.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.basePrice
+      })),
+      totalAmount: getTotalPrice(),
+      status: '주문 접수'
+    }
+
+    setOrders(prev => [newOrder, ...prev])
+    setInventory(updatedInventory)
+    setCart([])
+    alert('주문이 접수되었습니다!')
   }
 
   return (
@@ -250,9 +300,14 @@ function App() {
                 <div className="cart-total">
                   <span>총 금액 {getTotalPrice().toLocaleString()}원</span>
                 </div>
-                <button className="order-btn" disabled={cart.length === 0}>
-                  주문하기
-                </button>
+        <button 
+          className="order-btn" 
+          disabled={cart.length === 0}
+          onClick={handleOrder}
+          aria-label="장바구니에 담긴 상품을 주문합니다"
+        >
+          주문하기
+        </button>
               </div>
             </div>
           </div>
@@ -399,7 +454,14 @@ function MenuItem({ item, onAddToCart }) {
   return (
     <div className="menu-item">
       <div className="item-image">
-        <img src={item.image} alt={item.name} className="coffee-image" />
+        <img 
+          src={item.image} 
+          alt={item.name} 
+          className="coffee-image"
+          onError={(e) => {
+            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzZiNzI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuydtOuvuOyngCDslYzsiqQ8L3RleHQ+PC9zdmc+'
+          }}
+        />
       </div>
       <div className="item-info">
         <h3 className="item-name">{item.name}</h3>
