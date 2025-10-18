@@ -371,3 +371,317 @@ const order = {
 - 주문 화면과 관리자 화면 간 실시간 동기화
 - 재고 변경 시 주문 화면 상품 상태 업데이트
 - 주문 상태 변경 시 사용자에게 알림 (선택사항)
+
+---
+
+## 6. 백엔드 개발 요구사항
+
+### 6.1 데이터 모델 설계
+
+#### 6.1.1 Menus (메뉴)
+**목적**: 커피 메뉴 정보와 재고 관리
+```javascript
+{
+  id: number,           // 메뉴 고유 ID
+  name: string,         // 메뉴명 (예: "아메리카노(ICE)")
+  description: string,  // 메뉴 설명
+  price: number,       // 기본 가격 (원)
+  image: string,       // 이미지 URL
+  stock: number,       // 재고 수량
+  isActive: boolean,   // 판매 여부
+  createdAt: Date,     // 생성일시
+  updatedAt: Date      // 수정일시
+}
+```
+
+#### 6.1.2 Options (옵션)
+**목적**: 메뉴별 추가 옵션 관리
+```javascript
+{
+  id: number,          // 옵션 고유 ID
+  menuId: number,      // 연결된 메뉴 ID
+  name: string,        // 옵션명 (예: "샷 추가", "시럽 추가")
+  price: number,       // 옵션 가격 (원)
+  isActive: boolean,   // 옵션 활성화 여부
+  createdAt: Date,     // 생성일시
+  updatedAt: Date      // 수정일시
+}
+```
+
+#### 6.1.3 Orders (주문)
+**목적**: 주문 정보 및 상태 관리
+```javascript
+{
+  id: number,          // 주문 고유 ID
+  orderNumber: string,  // 주문번호 (예: "ORD-20240115-001")
+  orderTime: Date,     // 주문 일시
+  status: string,      // 주문 상태 ("주문 접수", "제조 중", "제조 완료")
+  totalAmount: number, // 총 주문 금액
+  items: [             // 주문 상품 목록
+    {
+      menuId: number,      // 메뉴 ID
+      menuName: string,    // 메뉴명
+      quantity: number,    // 수량
+      basePrice: number,  // 기본 가격
+      options: [          // 선택된 옵션들
+        {
+          optionId: number,
+          optionName: string,
+          optionPrice: number
+        }
+      ],
+      itemTotal: number   // 상품별 총액
+    }
+  ],
+  createdAt: Date,     // 생성일시
+  updatedAt: Date      // 수정일시
+}
+```
+
+### 6.2 사용자 흐름 및 데이터 처리
+
+#### 6.2.1 메뉴 조회 흐름
+1. **프론트엔드**: 메뉴 목록 조회 요청
+2. **백엔드**: Menus 테이블에서 활성화된 메뉴 조회
+3. **응답**: 메뉴 정보 (이름, 설명, 가격, 이미지) 반환
+4. **관리자 화면**: 재고 수량 정보 추가 표시
+
+#### 6.2.2 주문 처리 흐름
+1. **사용자**: 메뉴 선택 및 옵션 설정
+2. **장바구니**: 선택 정보 임시 저장
+3. **주문 요청**: 주문 정보를 Orders 테이블에 저장
+4. **재고 차감**: 주문 수량만큼 Menus.stock 감소
+5. **응답**: 주문 완료 및 주문번호 반환
+
+#### 6.2.3 주문 상태 관리 흐름
+1. **관리자**: 주문 현황 조회
+2. **상태 변경**: "주문 접수" → "제조 중" → "제조 완료"
+3. **실시간 업데이트**: 상태 변경 시 프론트엔드 동기화
+
+### 6.3 API 설계
+
+#### 6.3.1 메뉴 관련 API
+
+**GET /api/menus**
+- **목적**: 활성화된 메뉴 목록 조회
+- **응답**: 메뉴 정보 배열
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "아메리카노(ICE)",
+      "description": "시원한 아이스 아메리카노",
+      "price": 4000,
+      "image": "/images/americano-ice.jpg",
+      "stock": 15
+    }
+  ]
+}
+```
+
+**GET /api/menus/options/:menuId**
+- **목적**: 특정 메뉴의 옵션 목록 조회
+- **응답**: 옵션 정보 배열
+
+#### 6.3.2 주문 관련 API
+
+**POST /api/orders**
+- **목적**: 새 주문 생성
+- **요청 본문**:
+```json
+{
+  "items": [
+    {
+      "menuId": 1,
+      "quantity": 2,
+      "options": [
+        {"optionId": 1, "quantity": 1}
+      ]
+    }
+  ]
+}
+```
+- **응답**:
+```json
+{
+  "success": true,
+  "data": {
+    "orderId": 123,
+    "orderNumber": "ORD-20240115-001",
+    "totalAmount": 9000
+  }
+}
+```
+
+**GET /api/orders**
+- **목적**: 주문 목록 조회 (관리자용)
+- **쿼리 파라미터**: status, limit, offset
+- **응답**: 주문 목록 배열
+
+**PUT /api/orders/:orderId/status**
+- **목적**: 주문 상태 변경
+- **요청 본문**:
+```json
+{
+  "status": "제조 중"
+}
+```
+
+#### 6.3.3 재고 관리 API
+
+**GET /api/inventory**
+- **목적**: 재고 현황 조회 (관리자용)
+- **응답**: 메뉴별 재고 정보
+
+**PUT /api/inventory/:menuId**
+- **목적**: 재고 수량 수정
+- **요청 본문**:
+```json
+{
+  "stock": 20
+}
+```
+
+### 6.4 데이터베이스 스키마
+
+#### 6.4.1 Menus 테이블
+```sql
+CREATE TABLE menus (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  price DECIMAL(10,2) NOT NULL,
+  image VARCHAR(255),
+  stock INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 6.4.2 Options 테이블
+```sql
+CREATE TABLE options (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  menu_id INT NOT NULL,
+  name VARCHAR(50) NOT NULL,
+  price DECIMAL(10,2) DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (menu_id) REFERENCES menus(id) ON DELETE CASCADE
+);
+```
+
+#### 6.4.3 Orders 테이블
+```sql
+CREATE TABLE orders (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  order_number VARCHAR(50) UNIQUE NOT NULL,
+  order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  status ENUM('주문 접수', '제조 중', '제조 완료') DEFAULT '주문 접수',
+  total_amount DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### 6.4.4 Order_Items 테이블
+```sql
+CREATE TABLE order_items (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  order_id INT NOT NULL,
+  menu_id INT NOT NULL,
+  menu_name VARCHAR(100) NOT NULL,
+  quantity INT NOT NULL,
+  base_price DECIMAL(10,2) NOT NULL,
+  item_total DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (menu_id) REFERENCES menus(id)
+);
+```
+
+#### 6.4.5 Order_Item_Options 테이블
+```sql
+CREATE TABLE order_item_options (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  order_item_id INT NOT NULL,
+  option_id INT NOT NULL,
+  option_name VARCHAR(50) NOT NULL,
+  option_price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE,
+  FOREIGN KEY (option_id) REFERENCES options(id)
+);
+```
+
+### 6.5 비즈니스 로직
+
+#### 6.5.1 주문 생성 시 처리
+1. **재고 확인**: 주문 수량이 재고보다 많은지 확인
+2. **재고 차감**: 주문 확정 시 재고 수량 감소
+3. **주문번호 생성**: "ORD-YYYYMMDD-XXX" 형식
+4. **트랜잭션 처리**: 주문 생성과 재고 차감을 원자적으로 처리
+
+#### 6.5.2 재고 관리
+1. **재고 부족 알림**: 재고가 5개 이하일 때 경고
+2. **품절 처리**: 재고가 0일 때 주문 불가
+3. **재고 복구**: 관리자가 수동으로 재고 추가 가능
+
+#### 6.5.3 주문 상태 관리
+1. **상태 전환**: 주문 접수 → 제조 중 → 제조 완료
+2. **역방향 처리**: 필요 시 이전 상태로 복구
+3. **상태 로그**: 상태 변경 이력 추적
+
+### 6.6 에러 처리
+
+#### 6.6.1 일반적인 에러 응답
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INSUFFICIENT_STOCK",
+    "message": "재고가 부족합니다",
+    "details": {
+      "menuId": 1,
+      "requested": 5,
+      "available": 3
+    }
+  }
+}
+```
+
+#### 6.6.2 에러 코드 정의
+- `INSUFFICIENT_STOCK`: 재고 부족
+- `MENU_NOT_FOUND`: 메뉴를 찾을 수 없음
+- `ORDER_NOT_FOUND`: 주문을 찾을 수 없음
+- `INVALID_STATUS`: 잘못된 상태 변경
+- `VALIDATION_ERROR`: 입력값 검증 실패
+
+### 6.7 성능 최적화
+
+#### 6.7.1 데이터베이스 인덱스
+- `menus.is_active` 인덱스
+- `orders.status` 인덱스
+- `orders.order_time` 인덱스
+- `order_items.order_id` 인덱스
+
+#### 6.7.2 캐싱 전략
+- 메뉴 목록: Redis 캐시 (5분)
+- 재고 정보: 실시간 업데이트
+- 주문 통계: 1분 캐시
+
+### 6.8 보안 고려사항
+
+#### 6.8.1 입력값 검증
+- 주문 수량: 양수, 최대값 제한
+- 가격: 음수 방지, 소수점 처리
+- 메뉴 ID: 존재 여부 확인
+
+#### 6.8.2 API 보안
+- Rate Limiting: IP별 요청 제한
+- CORS 설정: 허용된 도메인만 접근
+- SQL Injection 방지: Prepared Statement 사용

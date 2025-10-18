@@ -198,7 +198,7 @@ function App() {
         minute: '2-digit'
       }).replace(/\./g, '-').replace(/,/g, ''),
       items: cart.map(item => ({
-        name: item.name,
+        name: item.name + (item.options.shot ? ' (샷 추가)' : '') + (item.options.syrup ? ' (시럽 추가)' : ''),
         quantity: item.quantity,
         price: item.basePrice
       })),

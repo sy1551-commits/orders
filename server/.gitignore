@@ -1,0 +1,115 @@
+# 환경 변수 파일 (민감한 정보 포함)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로그 파일
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 런타임 데이터
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 디렉토리
+node_modules/
+jspm_packages/
+
+# TypeScript 캐시
+*.tsbuildinfo
+
+# 선택적 npm 캐시 디렉토리
+.npm
+
+# 선택적 eslint 캐시
+.eslintcache
+
+# 마이크로번들 캐시
+.parcel-cache
+
+# Next.js 빌드 출력
+.next
+
+# Nuxt.js 빌드 / 생성 출력
+.nuxt
+dist
+
+# Gatsby 파일
+.cache/
+public
+
+# Storybook 빌드 출력
+.out
+.storybook-out
+
+# 임시 폴더
+tmp/
+temp/
+
+# 에디터 디렉토리 및 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 데이터베이스 파일
+*.sqlite
+*.sqlite3
+*.db
+
+# 업로드 파일
+uploads/
+public/uploads/
+
+# 백업 파일
+*.bak
+*.backup
+
+# 압축 파일
+*.zip
+*.tar.gz
+*.rar
+
+# 테스트 커버리지
+coverage/
+.nyc_output
+
+# 빌드 출력
+build/
+dist/
+out/
+
+# PM2 파일
+ecosystem.config.js
+
+# Docker 파일
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# SSL 인증서
+*.pem
+*.key
+*.crt
+
+# 설정 파일 (민감한 정보 포함)
+config.local.js
+secrets.json
