@@ -6,16 +6,18 @@ class Order {
   static async findAll({ status, limit = 50, offset = 0 } = {}) {
     try {
       let query = `
-        SELECT o.id, o.order_number, o.total_amount, o.status, 
-               o.created_at as order_time,
-               STRING_AGG(
-                 oi.menu_name || ' x' || oi.quantity || 
-                 COALESCE(' (' || STRING_AGG(DISTINCT oio.option_name, ', ') || ')', ''),
-                 ', '
-               ) as items_summary
+        SELECT 
+          o.id, 
+          o.order_number, 
+          o.total_amount, 
+          o.status, 
+          o.created_at as order_time,
+          STRING_AGG(
+            DISTINCT oi.menu_name || ' x' || oi.quantity,
+            ', '
+          ) as items_summary
         FROM orders o
         LEFT JOIN order_items oi ON o.id = oi.order_id
-        LEFT JOIN order_item_options oio ON oi.id = oio.order_item_id
       `
       
       const params = []
