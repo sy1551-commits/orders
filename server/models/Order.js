@@ -155,10 +155,23 @@ class Order {
         // 옵션 추가
         if (item.options && item.options.length > 0) {
           for (const option of item.options) {
-            await client.query(
-              'INSERT INTO order_item_options (order_item_id, option_id, option_name, option_price) VALUES ($1, $2, $3, $4)',
-              [orderItem.id, option.id, option.name, option.price]
-            )
+            // 옵션 ID가 없으면 옵션 이름으로 조회
+            let optionId = option.id
+            if (!optionId) {
+              const optionResult = await client.query(
+                'SELECT id FROM options WHERE menu_id = $1 AND name = $2 LIMIT 1',
+                [item.menuId, option.name]
+              )
+              optionId = optionResult.rows[0]?.id || null
+            }
+            
+            // option_id가 있을 때만 삽입
+            if (optionId) {
+              await client.query(
+                'INSERT INTO order_item_options (order_item_id, option_id, option_name, option_price) VALUES ($1, $2, $3, $4)',
+                [orderItem.id, optionId, option.name, option.price]
+              )
+            }
           }
         }
       }
