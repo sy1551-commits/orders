@@ -26,6 +26,7 @@ app.get('/', (req, res) => {
 app.use('/api/menus', require('./routes/menus'))
 app.use('/api/orders', require('./routes/orders'))
 app.use('/api/inventory', require('./routes/inventory'))
+app.use('/api/admin', require('./routes/admin'))
 
 // 404 에러 처리
 app.use((req, res) => {
