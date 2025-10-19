@@ -137,9 +137,17 @@ class Order {
       for (const item of orderItems) {
         const menu = await Menu.findById(item.menuId)
         
+        // 항목별 총 금액 계산 (메뉴 가격 + 옵션 가격)
+        let itemTotal = menu.price * item.quantity
+        if (item.options && item.options.length > 0) {
+          for (const option of item.options) {
+            itemTotal += option.price * item.quantity
+          }
+        }
+        
         const itemResult = await client.query(
-          'INSERT INTO order_items (order_id, menu_id, menu_name, quantity, price) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-          [order.id, item.menuId, menu.name, item.quantity, menu.price]
+          'INSERT INTO order_items (order_id, menu_id, menu_name, quantity, base_price, item_total) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [order.id, item.menuId, menu.name, item.quantity, menu.price, itemTotal]
         )
         
         const orderItem = itemResult.rows[0]
