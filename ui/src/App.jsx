@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import './App.css'
 
-// API 기본 URL
-const API_BASE_URL = 'http://localhost:3001/api'
+// API 기본 URL (환경 변수 사용)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'
 
 function App() {
   const [activeTab, setActiveTab] = useState('order')
