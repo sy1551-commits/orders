@@ -1,5 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import './App.css'
+
+// API 기본 URL
+const API_BASE_URL = 'http://localhost:3001/api'
 
 function App() {
   const [activeTab, setActiveTab] = useState('order')
@@ -40,21 +43,21 @@ function App() {
       id: 1,
       name: '아메리카노(ICE)',
       price: 4000,
-      image: './iced-coffee-7113043_1920.jpg',
+      image: '/images/americano-ice.jpg',
       description: '시원한 아이스 아메리카노'
     },
     {
       id: 2,
       name: '아메리카노(HOT)',
       price: 4000,
-      image: 'https://images.pexels.com/photos/374885/pexels-photo-374885.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
+      image: '/images/americano-hot.jpg',
       description: '따뜻한 핫 아메리카노'
     },
     {
       id: 3,
       name: '카페라떼',
       price: 5000,
-      image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop',
+      image: '/images/cafe-latte.jpg',
       description: '부드러운 카페라떼'
     }
   ]
@@ -130,21 +133,80 @@ function App() {
     return cart.reduce((total, item) => total + item.totalPrice, 0)
   }
 
+  // 관리자 화면 활성화 시 재고 및 주문 데이터 로드
+  useEffect(() => {
+    const loadAdminData = async () => {
+      if (activeTab === 'admin') {
+        try {
+          // 재고 데이터 로드
+          const inventoryResponse = await fetch(`${API_BASE_URL}/inventory`)
+          const inventoryData = await inventoryResponse.json()
+          if (inventoryData.success) {
+            setInventory(inventoryData.data)
+          }
+
+          // 주문 데이터 로드
+          const ordersResponse = await fetch(`${API_BASE_URL}/orders`)
+          const ordersData = await ordersResponse.json()
+          if (ordersData.success) {
+            setOrders(ordersData.data)
+          }
+        } catch (error) {
+          console.error('데이터 로드 오류:', error)
+        }
+      }
+    }
+    loadAdminData()
+  }, [activeTab])
+
   // 관리자 화면을 위한 함수들
-  const updateInventory = (id, change) => {
-    setInventory(prev => prev.map(item => 
-      item.id === id 
-        ? { ...item, stock: Math.max(0, item.stock + change) }
-        : item
-    ))
+  const updateInventory = async (id, change) => {
+    try {
+      const currentItem = inventory.find(item => item.id === id)
+      if (!currentItem) return
+
+      const newStock = Math.max(0, currentItem.stock + change)
+      
+      const response = await fetch(`${API_BASE_URL}/inventory/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: newStock })
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        setInventory(prev => prev.map(item => 
+          item.id === id 
+            ? { ...item, stock: newStock }
+            : item
+        ))
+      }
+    } catch (error) {
+      console.error('재고 업데이트 오류:', error)
+      alert('재고 업데이트 중 오류가 발생했습니다.')
+    }
   }
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus }
-        : order
-    ))
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        setOrders(prev => prev.map(order => 
+          order.id === orderId 
+            ? { ...order, status: newStatus }
+            : order
+        ))
+      }
+    } catch (error) {
+      console.error('주문 상태 업데이트 오류:', error)
+      alert('주문 상태 업데이트 중 오류가 발생했습니다.')
+    }
   }
 
   const getStockStatus = (stock) => {
@@ -163,53 +225,65 @@ function App() {
   }
 
   // 주문 처리 함수
-  const handleOrder = () => {
+  const handleOrder = async () => {
     if (cart.length === 0) return
 
-    // 재고 확인 및 차감
-    const updatedInventory = [...inventory]
-    let canOrder = true
-    let outOfStockItems = []
-
-    for (const cartItem of cart) {
-      const inventoryItem = updatedInventory.find(inv => inv.id === cartItem.productId)
-      if (inventoryItem) {
-        if (inventoryItem.stock < cartItem.quantity) {
-          canOrder = false
-          outOfStockItems.push(cartItem.name)
-        } else {
-          inventoryItem.stock -= cartItem.quantity
+    try {
+      // API로 주문 생성 (옵션 ID를 메뉴 ID에 맞게 조정)
+      const orderItems = cart.map(item => {
+        const shotOptionId = item.productId * 2 - 1  // 1->1, 2->3, 3->5
+        const syrupOptionId = item.productId * 2      // 1->2, 2->4, 3->6
+        
+        return {
+          menuId: item.productId,
+          quantity: item.quantity,
+          options: [
+            ...(item.options.shot ? [{ optionId: shotOptionId }] : []),
+            ...(item.options.syrup ? [{ optionId: syrupOptionId }] : [])
+          ]
         }
+      })
+
+      const response = await fetch(`${API_BASE_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: orderItems })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // 주문 성공 시 장바구니 비우기
+        setCart([])
+        alert('주문이 완료되었습니다!')
+        
+        // 관리자 화면이면 주문 목록과 재고 새로고침
+        if (activeTab === 'admin') {
+          // 재고 데이터 다시 로드
+          const inventoryResponse = await fetch(`${API_BASE_URL}/inventory`)
+          const inventoryData = await inventoryResponse.json()
+          if (inventoryData.success) {
+            setInventory(inventoryData.data)
+          }
+          
+          // 주문 목록 다시 로드
+          const ordersResponse = await fetch(`${API_BASE_URL}/orders`)
+          const ordersData = await ordersResponse.json()
+          if (ordersData.success) {
+            setOrders(ordersData.data)
+          }
+        }
+      } else {
+        throw new Error(data.error?.message || '주문 처리 실패')
+      }
+    } catch (error) {
+      console.error('주문 처리 오류:', error)
+      if (error.message.includes('INSUFFICIENT_STOCK') || error.message.includes('재고')) {
+        alert('재고가 부족합니다. 관리자에게 문의하세요.')
+      } else {
+        alert('주문 처리 중 오류가 발생했습니다.')
       }
     }
-
-    if (!canOrder) {
-      alert(`재고가 부족합니다: ${outOfStockItems.join(', ')}`)
-      return
-    }
-
-    const newOrder = {
-      id: Date.now(),
-      orderTime: new Date().toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).replace(/\./g, '-').replace(/,/g, ''),
-      items: cart.map(item => ({
-        name: item.name + (item.options.shot ? ' (샷 추가)' : '') + (item.options.syrup ? ' (시럽 추가)' : ''),
-        quantity: item.quantity,
-        price: item.basePrice
-      })),
-      totalAmount: getTotalPrice(),
-      status: '주문 접수'
-    }
-
-    setOrders(prev => [newOrder, ...prev])
-    setInventory(updatedInventory)
-    setCart([])
-    alert('주문이 접수되었습니다!')
   }
 
   return (
@@ -381,45 +455,55 @@ function App() {
             <div className="orders-section">
               <h2>주문 현황</h2>
               <div className="orders-list">
-                {orders.map(order => (
-                  <div key={order.id} className="order-card">
-                    <div className="order-info">
-                      <div className="order-time">{order.orderTime}</div>
-                      <div className="order-items">
-                        {order.items.map((item, index) => (
-                          <span key={index}>
-                            {item.name} x{item.quantity}
-                            {index < order.items.length - 1 && ', '}
-                          </span>
-                        ))}
+                {orders.map(order => {
+                  // API 응답 데이터 형식 처리
+                  const orderTime = order.order_time || order.orderTime
+                  const displayTime = orderTime ? new Date(orderTime).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }).replace(/\./g, '-').replace(/,/g, '') : ''
+                  
+                  const totalAmount = parseFloat(order.total_amount || order.totalAmount || 0)
+                  const itemsSummary = order.items_summary || ''
+                  
+                  return (
+                    <div key={order.id} className="order-card">
+                      <div className="order-info">
+                        <div className="order-time">{displayTime}</div>
+                        <div className="order-items">
+                          {itemsSummary}
+                        </div>
+                        <div className="order-amount">{totalAmount.toLocaleString()}원</div>
                       </div>
-                      <div className="order-amount">{order.totalAmount.toLocaleString()}원</div>
-                    </div>
-                    <div className="order-status">
-                      <span className={`status-badge status-${order.status}`}>
-                        {order.status}
-                      </span>
-                      <div className="order-actions">
-                        {order.status === '주문 접수' && (
-                          <button 
-                            className="status-btn" 
-                            onClick={() => updateOrderStatus(order.id, '제조 중')}
-                          >
-                            제조 시작
-                          </button>
-                        )}
-                        {order.status === '제조 중' && (
-                          <button 
-                            className="status-btn" 
-                            onClick={() => updateOrderStatus(order.id, '제조 완료')}
-                          >
-                            제조 완료
-                          </button>
-                        )}
+                      <div className="order-status">
+                        <span className={`status-badge status-${order.status}`}>
+                          {order.status}
+                        </span>
+                        <div className="order-actions">
+                          {order.status === '주문 접수' && (
+                            <button 
+                              className="status-btn" 
+                              onClick={() => updateOrderStatus(order.id, '제조 중')}
+                            >
+                              제조 시작
+                            </button>
+                          )}
+                          {order.status === '제조 중' && (
+                            <button 
+                              className="status-btn" 
+                              onClick={() => updateOrderStatus(order.id, '제조 완료')}
+                            >
+                              제조 완료
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
