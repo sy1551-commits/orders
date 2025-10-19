@@ -132,6 +132,16 @@ const seedDatabase = async () => {
   try {
     const client = await pool.connect()
 
+    // 이미 데이터가 있는지 확인
+    const checkResult = await client.query('SELECT COUNT(*) FROM menus')
+    const count = parseInt(checkResult.rows[0].count)
+
+    if (count > 0) {
+      console.log('✅ 초기 데이터가 이미 존재합니다. 스킵합니다.')
+      client.release()
+      return
+    }
+
     // 메뉴 데이터 삽입
     const menuData = [
       ['아메리카노(ICE)', '시원한 아이스 아메리카노', 4000, '/images/americano-ice.jpg', 15],
@@ -143,7 +153,6 @@ const seedDatabase = async () => {
       await client.query(`
         INSERT INTO menus (name, description, price, image, stock) 
         VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT DO NOTHING
       `, menu)
     }
 
@@ -161,7 +170,6 @@ const seedDatabase = async () => {
       await client.query(`
         INSERT INTO options (menu_id, name, price) 
         VALUES ($1, $2, $3)
-        ON CONFLICT DO NOTHING
       `, option)
     }
 
