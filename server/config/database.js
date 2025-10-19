@@ -2,7 +2,7 @@ const { Pool } = require('pg')
 const config = require('../config')
 
 // PostgreSQL 연결 풀 생성
-const pool = new Pool({
+const poolConfig = {
   host: config.database.host,
   port: config.database.port,
   database: config.database.name,
@@ -11,7 +11,16 @@ const pool = new Pool({
   max: 20, // 최대 연결 수
   idleTimeoutMillis: 30000, // 유휴 연결 타임아웃
   connectionTimeoutMillis: 2000, // 연결 타임아웃
-})
+}
+
+// production 환경이거나 Render 환경에서는 SSL 필수
+if (config.nodeEnv === 'production' || process.env.RENDER) {
+  poolConfig.ssl = {
+    rejectUnauthorized: false
+  }
+}
+
+const pool = new Pool(poolConfig)
 
 // 연결 테스트
 pool.on('connect', () => {
