@@ -195,6 +195,7 @@ const query = async (text, params) => {
 }
 
 module.exports = {
+  db: pool, // pool을 db로 export
   pool,
   query,
   initDatabase,
