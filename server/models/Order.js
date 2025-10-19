@@ -13,7 +13,16 @@ class Order {
           o.status, 
           o.created_at as order_time,
           STRING_AGG(
-            DISTINCT oi.menu_name || ' x' || oi.quantity,
+            DISTINCT oi.menu_name || 
+            COALESCE(
+              '(' || (
+                SELECT STRING_AGG(oio.option_name, ', ')
+                FROM order_item_options oio
+                WHERE oio.order_item_id = oi.id
+              ) || ')', 
+              ''
+            ) || 
+            ' x' || oi.quantity,
             ', '
           ) as items_summary
         FROM orders o

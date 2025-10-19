@@ -468,6 +468,7 @@ function App() {
                   
                   const totalAmount = parseFloat(order.total_amount || order.totalAmount || 0)
                   const itemsSummary = order.items_summary || ''
+                  const amount = Number(totalAmount) || 0
                   
                   return (
                     <div key={order.id} className="order-card">
@@ -476,7 +477,7 @@ function App() {
                         <div className="order-items">
                           {itemsSummary}
                         </div>
-                        <div className="order-amount">{totalAmount.toLocaleString()}원</div>
+                        <div className="order-amount">{amount.toLocaleString()}원</div>
                       </div>
                       <div className="order-status">
                         <span className={`status-badge status-${order.status}`}>
