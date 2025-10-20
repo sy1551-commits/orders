@@ -9,7 +9,7 @@ class Order {
         SELECT 
           o.id, 
           o.order_number, 
-          o.total_amount, 
+          COALESCE(o.total_amount, 0) as total_amount, 
           o.status, 
           o.created_at as order_time,
           STRING_AGG(
@@ -125,11 +125,13 @@ class Order {
       let totalAmount = 0
       for (const item of orderItems) {
         const menu = await Menu.findById(item.menuId)
-        totalAmount += menu.price * item.quantity
+        const menuPrice = parseFloat(menu.price) || 0
+        totalAmount += menuPrice * item.quantity
         
         if (item.options) {
           for (const option of item.options) {
-            totalAmount += option.price * item.quantity
+            const optionPrice = parseFloat(option.price) || 0
+            totalAmount += optionPrice * item.quantity
           }
         }
       }
@@ -147,10 +149,12 @@ class Order {
         const menu = await Menu.findById(item.menuId)
         
         // 항목별 총 금액 계산 (메뉴 가격 + 옵션 가격)
-        let itemTotal = menu.price * item.quantity
+        const menuPrice = parseFloat(menu.price) || 0
+        let itemTotal = menuPrice * item.quantity
         if (item.options && item.options.length > 0) {
           for (const option of item.options) {
-            itemTotal += option.price * item.quantity
+            const optionPrice = parseFloat(option.price) || 0
+            itemTotal += optionPrice * item.quantity
           }
         }
         
@@ -176,9 +180,10 @@ class Order {
             
             // option_id가 있을 때만 삽입
             if (optionId) {
+              const optionPrice = parseFloat(option.price) || 0
               await client.query(
                 'INSERT INTO order_item_options (order_item_id, option_id, option_name, option_price) VALUES ($1, $2, $3, $4)',
-                [orderItem.id, optionId, option.name, option.price]
+                [orderItem.id, optionId, option.name, optionPrice]
               )
             }
           }
