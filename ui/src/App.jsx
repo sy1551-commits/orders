@@ -229,17 +229,14 @@ function App() {
     if (cart.length === 0) return
 
     try {
-      // API로 주문 생성 (옵션 ID를 메뉴 ID에 맞게 조정)
+      // API로 주문 생성 (옵션 정보를 올바른 형식으로 전송)
       const orderItems = cart.map(item => {
-        const shotOptionId = item.productId * 2 - 1  // 1->1, 2->3, 3->5
-        const syrupOptionId = item.productId * 2      // 1->2, 2->4, 3->6
-        
         return {
           menuId: item.productId,
           quantity: item.quantity,
           options: [
-            ...(item.options.shot ? [{ optionId: shotOptionId }] : []),
-            ...(item.options.syrup ? [{ optionId: syrupOptionId }] : [])
+            ...(item.options.shot ? [{ name: '샷 추가', price: 500 }] : []),
+            ...(item.options.syrup ? [{ name: '시럽 추가', price: 0 }] : [])
           ]
         }
       })
