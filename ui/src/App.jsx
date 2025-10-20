@@ -37,6 +37,12 @@ function App() {
     }
   ])
 
+  // 주문 필터링을 위한 상태
+  const [orderFilter, setOrderFilter] = useState({
+    status: 'all', // 'all', '주문 접수', '제조 중', '제조 완료'
+    showCompleted: true // 완료된 주문 표시 여부
+  })
+
   // 커피 메뉴 데이터
   const menuItems = [
     {
@@ -222,6 +228,35 @@ function App() {
     const completed = orders.filter(order => order.status === '제조 완료').length
     
     return { totalOrders, receivedOrders, inProduction, completed }
+  }
+
+  // 주문 필터링 함수
+  const getFilteredOrders = () => {
+    let filteredOrders = [...orders]
+    
+    // 상태별 필터링
+    if (orderFilter.status !== 'all') {
+      filteredOrders = filteredOrders.filter(order => order.status === orderFilter.status)
+    }
+    
+    // 완료된 주문 숨기기
+    if (!orderFilter.showCompleted) {
+      filteredOrders = filteredOrders.filter(order => order.status !== '제조 완료')
+    }
+    
+    return filteredOrders
+  }
+
+  // 주문 현황 클리어 함수 (프론트엔드에서만 숨김)
+  const clearCompletedOrders = () => {
+    setOrders(prev => prev.filter(order => order.status !== '제조 완료'))
+  }
+
+  // 모든 주문 클리어 함수 (프론트엔드에서만 숨김)
+  const clearAllOrders = () => {
+    if (window.confirm('모든 주문 현황을 화면에서 숨기시겠습니까? (백엔드 데이터는 유지됩니다)')) {
+      setOrders([])
+    }
   }
 
   // 주문 처리 함수
@@ -450,9 +485,54 @@ function App() {
 
             {/* 주문 현황 */}
             <div className="orders-section">
-              <h2>주문 현황</h2>
+              <div className="orders-header">
+                <h2>주문 현황</h2>
+                <div className="orders-controls">
+                  {/* 필터링 옵션 */}
+                  <div className="filter-controls">
+                    <select 
+                      value={orderFilter.status} 
+                      onChange={(e) => setOrderFilter(prev => ({ ...prev, status: e.target.value }))}
+                      className="status-filter"
+                    >
+                      <option value="all">전체</option>
+                      <option value="주문 접수">주문 접수</option>
+                      <option value="제조 중">제조 중</option>
+                      <option value="제조 완료">제조 완료</option>
+                    </select>
+                    
+                    <label className="checkbox-label">
+                      <input 
+                        type="checkbox" 
+                        checked={orderFilter.showCompleted}
+                        onChange={(e) => setOrderFilter(prev => ({ ...prev, showCompleted: e.target.checked }))}
+                      />
+                      완료된 주문 표시
+                    </label>
+                  </div>
+                  
+                  {/* 클리어 버튼들 */}
+                  <div className="clear-controls">
+                    <button 
+                      className="clear-btn completed" 
+                      onClick={clearCompletedOrders}
+                      title="완료된 주문만 화면에서 숨김"
+                    >
+                      완료 주문 숨기기
+                    </button>
+                    <button 
+                      className="clear-btn all" 
+                      onClick={clearAllOrders}
+                      title="모든 주문을 화면에서 숨김 (백엔드 데이터는 유지)"
+                    >
+                      전체 숨기기
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               <div className="orders-list">
-                {orders.map(order => {
+                {getFilteredOrders().map(order => {
                   // API 응답 데이터 형식 처리
                   const orderTime = order.order_time || order.orderTime
                   const displayTime = orderTime ? new Date(orderTime).toLocaleString('ko-KR', {

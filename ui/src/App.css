@@ -614,3 +614,115 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* 주문 현황 필터링 및 클리어 컨트롤 */
+.orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.orders-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-filter {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.status-filter:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.clear-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.clear-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-btn.completed {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.clear-btn.completed:hover {
+  background-color: #d97706;
+}
+
+.clear-btn.all {
+  background-color: #ef4444;
+  color: white;
+}
+
+.clear-btn.all:hover {
+  background-color: #dc2626;
+}
+
+.clear-btn:active {
+  transform: translateY(1px);
+}
+
+/* 모바일에서 주문 컨트롤 반응형 */
+@media (max-width: 768px) {
+  .orders-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .orders-controls {
+    align-items: stretch;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .clear-controls {
+    flex-direction: column;
+  }
+}
